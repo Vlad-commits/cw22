@@ -8,7 +8,6 @@ class MCMCSampler:
         self.uniform = stats.uniform()
 
     def sample(self, x_0, sample_from_proposal_fun, n_samples):
-        accepted_proposal_counter = 0
         x_prev = x_0
         result = [x_prev]
         for i in range(0, n_samples):
@@ -16,6 +15,5 @@ class MCMCSampler:
             acceptance_probability = min(self.target_pdf(proposed_x) / self.target_pdf(x_prev), 1)
             if acceptance_probability >= self.uniform.rvs():
                 x_prev = proposed_x
-                accepted_proposal_counter += 1
             result.append(x_prev)
-        return numpy.array(result), accepted_proposal_counter
+        return numpy.array(result)

@@ -13,33 +13,36 @@ multivariate_normal2 = stats.multivariate_normal([-4], [[0.5]])
 def pdf(x): return 0.4 * multivariate_normal1.pdf(x) + 0.6 * multivariate_normal2.pdf(x)
 
 
-Q = stats.multivariate_normal([0], [[3]])
+def cdf(x): return 0.4 * multivariate_normal1.cdf(x) + 0.6 * multivariate_normal2.cdf(x)
 
 
-def sample_from_random_walk_proposal(x):
-    return Q.rvs() + x
+def create_sample_from_random_walk_proposal_fun(D):
+    normal = stats.multivariate_normal([0], [[D]])
+    return lambda x: normal.rvs() + x
 
 
-def sample(target_pdf, x_0, sample_from_proposal_fun, n_samples):
-    uniform = stats.uniform()
-    x_prev = x_0
-    result = [x_prev]
-    for i in range(0, n_samples):
-        x_prime = sample_from_proposal_fun(x_prev)
-        acceptance_probability = min(target_pdf(x_prime) / target_pdf(x_prev), 1)
-        if acceptance_probability >= uniform.rvs():
-            x_prev = x_prime
-            result.append(x_prev)
-    return result
-
-
+sample_size = 1000
 sampler = MCMCSampler(pdf)
-(samples, accepted) = sampler.sample(0, sample_from_random_walk_proposal, 10000)
 
-print(accepted/len(samples))
+samples = []
 
+for d in [3, 50, 200, 1000]:
+    sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
+    samples.append(sample)
 
+plt.figure(1)
+plt.subplot(121)
 X = np.linspace(-8, 5, 10000)
-plt.plot(X, [pdf(x) for x in X], color="r", label="density")
-ax = sns.distplot(samples, color="y", hist=False, label="sample histogram")
+plt.plot(X, [pdf(x) for x in X], label="density")
+for i, sample in enumerate(samples):
+    sns.distplot(sample, hist=False, label="sample " + str(i) + " histogram")
+
+plt.subplot(122)
+ks_test_points = np.geomspace(1, sample_size, num=20, dtype=int)
+plt.yscale("log")
+plt.xscale("log")
+for i, sample in enumerate(samples):
+    ds = [stats.kstest(sample[:i], cdf)[0] for i in ks_test_points]
+    plt.plot(ks_test_points, ds)
+
 plt.show()
