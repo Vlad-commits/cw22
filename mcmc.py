@@ -31,9 +31,12 @@ def sample_and_plot(ds):
         sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
         samples.append(sample)
 
-    ks_test_points = range(sample_size)
     plt.yscale("log")
     plt.xscale("log")
+    plt.xlabel("n")
+    plt.ylabel("D_n")
+
+    ks_test_points = range(sample_size)
     for index, sample in enumerate(samples):
         dn = tests.kstest(sample, cdf, ks_test_points)
         smooth_dn = gaussian_filter1d(dn, sigma=50)
