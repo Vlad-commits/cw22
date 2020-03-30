@@ -2,7 +2,7 @@ import numpy as np
 from sortedcollections import SortedListWithKey
 
 
-def kstest(sample, cdf, test_points=None):
+def kstest(sample, cdf, test_points=None, verbose=False):
     import time
     start_time = time.time()
 
@@ -18,7 +18,8 @@ def kstest(sample, cdf, test_points=None):
     for index, value in enumerate(sample):
         e_cdf_index.add(value)
         real_cdf_values.append(cdf(value))
-        print("index: " + str(index) + " time spend: " + str(time.time() - start_time))
+        if (verbose):
+            print("index: " + str(index) + " time spend: " + str(time.time() - start_time))
         if test_points is None or index in test_points:
             ecdf_vals = e_cdf_index.edf_values()
             Dplus = np.abs((ecdf_vals - real_cdf_values)).max()

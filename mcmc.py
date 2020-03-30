@@ -1,8 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
 
 import scipy.stats as stats
-import seaborn as sns
 from scipy.ndimage.filters import gaussian_filter1d
 
 import tests
@@ -35,15 +33,6 @@ for d in ds:
     sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
     samples.append(sample)
 
-plt.figure(1)
-plt.subplot(121)
-X = np.linspace(-8, 5, 10000)
-plt.plot(X, [cdf(x) for x in X], label="real")
-for i, sample in enumerate(samples):
-    sns.distplot(sample, hist=False, label="sample " + str(i) + " histogram",
-                 kde_kws={'cumulative': True})
-
-plt.subplot(122)
 ks_test_points = range(sample_size)
 plt.yscale("log")
 plt.xscale("log")
