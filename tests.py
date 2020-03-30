@@ -21,10 +21,10 @@ def kstest(sample, cdf, test_points=None):
         print("index: " + str(index) + " time spend: " + str(time.time() - start_time))
         if test_points is None or index in test_points:
             ecdf_vals = e_cdf_index.edf_values()
-            Dplus = (ecdf_vals - real_cdf_values).max()
-            Dmin = (np.subtract(real_cdf_values, (ecdf_vals - 1 / (index + 1)))).max()
+            Dplus = np.abs((ecdf_vals - real_cdf_values)).max()
+            Dmin = np.abs((np.subtract(real_cdf_values, (ecdf_vals - 1 / (index + 1))))).max()
             D = np.max([Dplus, Dmin])
-            result.append((index ** 0.5) * D)
+            result.append(D)
     return result
 
 
