@@ -24,21 +24,24 @@ def create_sample_from_random_walk_proposal_fun(D):
 sample_size = 10000
 sampler = MCMCSampler(pdf)
 
-samples = []
-# ds = [0.1, 1, 10, 100, 1000]
-# ds = [1, 5, 10, 50, 100]
-ds = [5, 10]
 
-for d in ds:
-    sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
-    samples.append(sample)
+def sample_and_plot(ds):
+    samples = []
+    for d in ds:
+        sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
+        samples.append(sample)
 
-ks_test_points = range(sample_size)
-plt.yscale("log")
-plt.xscale("log")
-for index, sample in enumerate(samples):
-    dn = tests.kstest(sample, cdf, ks_test_points)
-    smooth_dn = gaussian_filter1d(dn, sigma=50)
-    plt.plot(ks_test_points, smooth_dn, label=str(ds[index]))
-    plt.legend(loc='best')
-plt.show()
+    ks_test_points = range(sample_size)
+    plt.yscale("log")
+    plt.xscale("log")
+    for index, sample in enumerate(samples):
+        dn = tests.kstest(sample, cdf, ks_test_points)
+        smooth_dn = gaussian_filter1d(dn, sigma=50)
+        plt.plot(ks_test_points, smooth_dn, label=str(ds[index]))
+        plt.legend(loc='best')
+    plt.show()
+
+
+sample_and_plot([0.1, 1, 10, 100, 1000])
+# sample_and_plot([1, 5, 10, 50, 100])
+# sample_and_plot([5, 10])
