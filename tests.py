@@ -1,5 +1,6 @@
 import numpy as np
 from sortedcollections import SortedListWithKey
+from sortedcollections import SortedList
 
 
 def kstest(sample, cdf, test_points=None, verbose=False):
@@ -29,6 +30,23 @@ def kstest(sample, cdf, test_points=None, verbose=False):
     return result
 
 
+def lrtest_1dim(sample1, sample2, test_points=None):
+    m = len(sample2)
+    sample1_sorted = SortedList()
+    combined_sample_sorted = SortedList(sample2)
+
+    results = []
+    for n, point in enumerate(sample1):
+        sample1_sorted.add(point)
+        combined_sample_sorted.add(point)
+        if test_points is None or n in test_points:
+            sum1 = sum([(sample1_sorted.bisect_right(sample1[i]) - 1 - (i + 1)) ** 2 for i in range(n)])
+            sum2 = sum([(combined_sample_sorted.bisect_right(sample2[j]) - 1 - (j + 1)) ** 2 for j in range(m)])
+            result = (1.0 / (m * n)) * (1.0 / 6 + (1.0 / m) * sum1 + (1.0 / n) * sum2) - (2.0 / 3)
+            results.append(result * (n * m) / (m + n))
+    return results
+
+
 class IndexedPoint:
     def __init__(self,
                  point,
@@ -39,7 +57,7 @@ class IndexedPoint:
 
 class SingleDimensionIndex:
 
-    def __init__(self, key_extractor):
+    def __init__(self, key_extractor=lambda x: x):
         self.next_point_number = 0
         self.key_extractor = key_extractor
         self.index = SortedListWithKey(key=lambda indexed_point: key_extractor(indexed_point.point))
