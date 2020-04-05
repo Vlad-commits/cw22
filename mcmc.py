@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
 
+import plots
 import tests
 from mcmc_sampler import MCMCSampler
 
@@ -26,43 +27,34 @@ sample_size = 10000
 sampler = MCMCSampler(pdf)
 
 
-def sample_and_test(d, discard_first, ks_test_points, use_mean_of):
-    samples_for_current_proposal = []
-    ks_statistics_for_current_proposal = []
-    for i in range(use_mean_of):
-        sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size,
-                                discard_first=discard_first)
-        samples_for_current_proposal.append(sample)
-
-        dn = tests.kstest(sample, cdf, ks_test_points)
-        ks_statistics_for_current_proposal.append(dn)
-    return ks_statistics_for_current_proposal, samples_for_current_proposal
+def n_samples(d, x_0, sample_size, n, discard_first=0):
+    return [sampler.sample(x_0, create_sample_from_random_walk_proposal_fun(d), sample_size,
+                           discard_first=discard_first) for i in range(n)]
 
 
-def sample_and_plot(ds, use_mean_of=10, discard_first=0) -> List[List[float]]:
+def ks_test(samples, cdf, ks_test_points):
+    return [tests.kstest(sample, cdf, ks_test_points) for sample in samples]
+
+
+def sample_and_plot(ds, use_mean_of=10, discard_first=0, plot_ecdfs=False, plot_histograms=False) -> List[List[float]]:
     ks_test_points = range(sample_size)
 
     samples = []
     ks_statistics = []
     for d in ds:
-        ks_statistics_for_current_proposal, samples_for_current_proposal = \
-            sample_and_test(d, discard_first, ks_test_points, use_mean_of)
+        samples_for_current_proposal = n_samples(d, 0, sample_size, use_mean_of, discard_first=discard_first)
+        ks_statistics_for_current_proposal = ks_test(samples_for_current_proposal, cdf, ks_test_points)
 
         samples.append(samples_for_current_proposal)
         ks_statistics.append(np.average(ks_statistics_for_current_proposal, axis=0))
 
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.xlabel("n")
-    plt.ylabel("D_n")
-
-    for index, ks in enumerate(ks_statistics):
-        plt.plot(ks_test_points, ks, label=str(ds[index]));
-    plt.legend(loc='best')
+    if plot_ecdfs:
+        plots.plot_cdf_and_ecdfs([s[0] for s in samples], cdf)
+    if plot_histograms:
+        plots.plot_pdf_and_histograms([s[0] for s in samples], pdf)
+    plots.plot_ks(ks_test_points, ks_statistics, [str(i) for i in ds])
     plt.show()
     return samples
 
 
-sample_and_plot([0.1, 1, 10, 100, 1000])
-# sample_and_plot([1, 5, 10, 50, 100])
-# sample_and_plot([5, 10])
+sample_and_plot([0.1, 1, 10, 100, 1000], plot_ecdfs=True, plot_histograms=True)
