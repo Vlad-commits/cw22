@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
-
+import numpy as np
 import scipy.stats as stats
-from scipy.ndimage.filters import gaussian_filter1d
 
 import tests
 from mcmc_sampler import MCMCSampler
@@ -25,11 +24,14 @@ sample_size = 10000
 sampler = MCMCSampler(pdf)
 
 
-def sample_and_plot(ds):
+def sample_and_plot(ds, use_mean_of=10):
     samples = []
     for d in ds:
-        sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
-        samples.append(sample)
+        samples_for_current_d = []
+        for i in range(use_mean_of):
+            sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
+            samples_for_current_d.append(sample)
+        samples.append(samples_for_current_d)
 
     plt.yscale("log")
     plt.xscale("log")
@@ -37,10 +39,13 @@ def sample_and_plot(ds):
     plt.ylabel("D_n")
 
     ks_test_points = range(sample_size)
-    for index, sample in enumerate(samples):
-        dn = tests.kstest(sample, cdf, ks_test_points)
-        smooth_dn = gaussian_filter1d(dn, sigma=50)
-        plt.plot(ks_test_points, smooth_dn, label=str(ds[index]))
+    for index, samples_for_d in enumerate(samples):
+        dns = []
+        for sample in samples_for_d:
+            dn = tests.kstest(sample, cdf, ks_test_points)
+            dns.append(dn)
+        avg_dn = np.average(dns)
+        plt.plot(ks_test_points, avg_dn, label=str(ds[index]))
         plt.legend(loc='best')
     plt.show()
 
