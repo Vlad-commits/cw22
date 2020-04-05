@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
+from typing import List
 
 import tests
 from mcmc_sampler import MCMCSampler
@@ -24,7 +25,7 @@ sample_size = 10000
 sampler = MCMCSampler(pdf)
 
 
-def sample_and_plot(ds, use_mean_of=10, discard_first=0):
+def sample_and_plot(ds, use_mean_of=10, discard_first=0) -> List[List[float]]:
     samples = []
     for d in ds:
         samples_for_current_d = []
@@ -45,10 +46,11 @@ def sample_and_plot(ds, use_mean_of=10, discard_first=0):
         for sample in samples_for_d:
             dn = tests.kstest(sample, cdf, ks_test_points)
             dns.append(dn)
-        avg_dn = np.average(dns)
+        avg_dn = np.average(dns, axis=0)
         plt.plot(ks_test_points, avg_dn, label=str(ds[index]))
         plt.legend(loc='best')
     plt.show()
+    return samples
 
 
 sample_and_plot([0.1, 1, 10, 100, 1000])
