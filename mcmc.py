@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -37,7 +38,7 @@ def ks_test(samples, cdf, ks_test_points):
 
 
 def sample_and_plot(ds, use_mean_of=10, discard_first=0, plot_ecdfs=False, plot_histograms=False) -> List[List[float]]:
-    ks_test_points = range(sample_size)
+    ks_test_points = np.unique(np.logspace(0, np.log10(sample_size), num=20, dtype=int))
 
     samples = []
     ks_statistics = []
