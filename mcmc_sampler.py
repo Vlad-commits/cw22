@@ -9,13 +9,13 @@ class MCMCSampler:
 
     def sample(self, x_0, sample_from_proposal_fun, n_samples, discard_first=0):
         x_prev = x_0
-        for i in range(0, discard_first):
+        for i in range(discard_first):
             self.sample_next(sample_from_proposal_fun, x_prev)
 
-        result = [x_prev]
-        for i in range(0, n_samples):
-            x_prev = self.sample_next(sample_from_proposal_fun, x_prev)
+        result = []
+        for i in range(n_samples):
             result.append(x_prev)
+            x_prev = self.sample_next(sample_from_proposal_fun, x_prev)
         return numpy.array(result)
 
     def sample_next(self, sample_from_proposal_fun, x_prev):
