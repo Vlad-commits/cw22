@@ -3,22 +3,27 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def plot_cdf_and_ecdfs(samples, cdf, left=-8, right=5):
+def plot_cdf_and_ecdfs(samples, cdf, labels,left=-8, right=5):
     plt.figure(1)
+    plt.title("Cumulative distribution function and empirical cumulative distribution functions")
+    plt.xlabel("x")
+    plt.ylabel("F(x)")
     X = np.linspace(left, right, 10000)
-    plt.plot(X, [cdf(x) for x in X], label="real")
+    plt.plot(X, [cdf(x) for x in X], label="CDF")
     for i, sample in enumerate(samples):
-        sns.distplot(sample, hist=False, label="sample " + str(i) + " ECDF",
+        sns.distplot(sample, hist=False, label=labels[i],
                      kde_kws={'cumulative': True})
 
 
-def plot_pdf_and_histograms(samples, pdf, left=-8, right=5):
+def plot_pdf_and_histograms(samples, pdf, labels, left=-8, right=5):
     plt.figure(2)
-
+    plt.title("Probability density function and histograms.")
+    plt.xlabel("x")
+    plt.ylabel("f(x)")
     X = np.linspace(left, right, 10000)
-    plt.plot(X, [pdf(x) for x in X], label="real")
+    plt.plot(X, [pdf(x) for x in X], label="PDF")
     for i, sample in enumerate(samples):
-        sns.distplot(sample, hist=False, label="sample " + str(i) + " histogram")
+        sns.distplot(sample, hist=False, label=labels[i])
 
 
 def plot_ks(ks_test_points, ks_statistics, labels):

@@ -49,11 +49,12 @@ def sample_and_plot(ds, use_mean_of=10, discard_first=0, plot_ecdfs=False, plot_
         samples.append(samples_for_current_proposal)
         ks_statistics.append(np.average(ks_statistics_for_current_proposal, axis=0))
 
+    labels = ["D=" + str(i) for i in ds]
     if plot_ecdfs:
-        plots.plot_cdf_and_ecdfs([s[0] for s in samples], cdf)
+        plots.plot_cdf_and_ecdfs([s[0] for s in samples], cdf, labels)
     if plot_histograms:
-        plots.plot_pdf_and_histograms([s[0] for s in samples], pdf)
-    plots.plot_ks(ks_test_points, ks_statistics, [str(i) for i in ds])
+        plots.plot_pdf_and_histograms([s[0] for s in samples], pdf, labels)
+    plots.plot_ks(ks_test_points, ks_statistics, labels)
     plt.show()
     return samples
 
