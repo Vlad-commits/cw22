@@ -1,7 +1,8 @@
+from typing import List
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
-from typing import List
 
 import tests
 from mcmc_sampler import MCMCSampler
@@ -25,30 +26,39 @@ sample_size = 10000
 sampler = MCMCSampler(pdf)
 
 
+def sample_and_test(d, discard_first, ks_test_points, use_mean_of):
+    samples_for_current_proposal = []
+    ks_statistics_for_current_proposal = []
+    for i in range(use_mean_of):
+        sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size,
+                                discard_first=discard_first)
+        samples_for_current_proposal.append(sample)
+
+        dn = tests.kstest(sample, cdf, ks_test_points)
+        ks_statistics_for_current_proposal.append(dn)
+    return ks_statistics_for_current_proposal, samples_for_current_proposal
+
+
 def sample_and_plot(ds, use_mean_of=10, discard_first=0) -> List[List[float]]:
+    ks_test_points = range(sample_size)
+
     samples = []
+    ks_statistics = []
     for d in ds:
-        samples_for_current_d = []
-        for i in range(use_mean_of):
-            sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size,
-                                    discard_first=discard_first)
-            samples_for_current_d.append(sample)
-        samples.append(samples_for_current_d)
+        ks_statistics_for_current_proposal, samples_for_current_proposal = \
+            sample_and_test(d, discard_first, ks_test_points, use_mean_of)
+
+        samples.append(samples_for_current_proposal)
+        ks_statistics.append(np.average(ks_statistics_for_current_proposal, axis=0))
 
     plt.yscale("log")
     plt.xscale("log")
     plt.xlabel("n")
     plt.ylabel("D_n")
 
-    ks_test_points = range(sample_size)
-    for index, samples_for_d in enumerate(samples):
-        dns = []
-        for sample in samples_for_d:
-            dn = tests.kstest(sample, cdf, ks_test_points)
-            dns.append(dn)
-        avg_dn = np.average(dns, axis=0)
-        plt.plot(ks_test_points, avg_dn, label=str(ds[index]))
-        plt.legend(loc='best')
+    for index, ks in enumerate(ks_statistics):
+        plt.plot(ks_test_points, ks, label=str(ds[index]));
+    plt.legend(loc='best')
     plt.show()
     return samples
 
