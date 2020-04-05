@@ -31,20 +31,43 @@ def kstest(sample, cdf, test_points=None, verbose=False):
 
 
 def lrtest_1dim(sample1, sample2, test_points=None):
-    m = len(sample2)
     sample1_sorted = SortedList()
-    combined_sample_sorted = SortedList(sample2)
+    sample2_sorted = SortedList()
 
     results = []
-    for n, point in enumerate(sample1):
+    for index, point in enumerate(sample1):
         sample1_sorted.add(point)
-        combined_sample_sorted.add(point)
+        sample2_sorted.add(sample2[index])
+
+        m = len(sample2_sorted)
+        n = len(sample1_sorted)
         if test_points is None or n in test_points:
-            sum1 = sum([(sample1_sorted.bisect_right(sample1[i]) - 1 - (i + 1)) ** 2 for i in range(n)])
-            sum2 = sum([(combined_sample_sorted.bisect_right(sample2[j]) - 1 - (j + 1)) ** 2 for j in range(m)])
-            result = (1.0 / (m * n)) * (1.0 / 6 + (1.0 / m) * sum1 + (1.0 / n) * sum2) - (2.0 / 3)
-            results.append(result * (n * m) / (m + n))
+            result = lr_test(sample1_sorted, sample2_sorted)
+            # results.append(result * (n * m) / (m + n))
+            results.append(result)
     return results
+
+
+def lr_test(sample1_sorted, sample2_sorted):
+    n = len(sample1_sorted)
+    m = len(sample2_sorted)
+
+    sum1 = 0.0
+    i = 1
+    for x_i in sample1_sorted:
+        r_i = i + sample2_sorted.bisect_right(x_i)
+        sum1 += (r_i - i) ** 2
+        i = i + 1
+
+    sum2 = 0.0
+    j = 1
+    for y_j in sample2_sorted:
+        s_j = sample1_sorted.bisect_right(y_j) + j
+        sum2 += (s_j - j) ** 2
+        j = j + 1
+
+    result = (1.0 / (m * n)) * (1.0 / 6 + sum1 / m + sum2 / n) - (2.0 / 3)
+    return result
 
 
 class IndexedPoint:
