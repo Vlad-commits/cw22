@@ -24,12 +24,13 @@ sample_size = 10000
 sampler = MCMCSampler(pdf)
 
 
-def sample_and_plot(ds, use_mean_of=10):
+def sample_and_plot(ds, use_mean_of=10, discard_first=0):
     samples = []
     for d in ds:
         samples_for_current_d = []
         for i in range(use_mean_of):
-            sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size)
+            sample = sampler.sample(0, create_sample_from_random_walk_proposal_fun(d), sample_size,
+                                    discard_first=discard_first)
             samples_for_current_d.append(sample)
         samples.append(samples_for_current_d)
 
