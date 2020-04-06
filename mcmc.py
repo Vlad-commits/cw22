@@ -32,7 +32,6 @@ def create_sample_from_random_walk_proposal_fun(D):
     return lambda x: normal.rvs() + x
 
 
-sample_size = 10000
 sampler = MCMCSampler(pdf)
 
 
@@ -49,8 +48,8 @@ def lr_test(samples, cdf, ks_test_points):
     return [tests.lrtest_1dim(sample, cdf, ks_test_points) for sample in samples]
 
 
-def sample_and_plot(ds, use_mean_of=20, discard_first=0, plot_ecdfs=False, plot_histograms=False) -> List[List[float]]:
-    test_points = np.unique(np.logspace(0, np.log10(sample_size - 1), num=20, dtype=int))
+def sample_and_plot(ds, use_mean_of=20, discard_first=500, sample_size=10000):
+    test_points = np.unique(np.logspace(np.log10(sample_size) - 2, np.log10(sample_size - 1), num=10, dtype=int))
 
     samples = []
     ks_statistics = []
@@ -65,14 +64,9 @@ def sample_and_plot(ds, use_mean_of=20, discard_first=0, plot_ecdfs=False, plot_
         lr_statistics.append(np.average(lr_statistics_for_current_proposal, axis=0))
 
     labels = ["D=" + str(i) for i in ds]
-    if plot_ecdfs:
-        plots.plot_cdf_and_ecdfs([s[0] for s in samples], cdf, labels)
-    if plot_histograms:
-        plots.plot_pdf_and_histograms([s[0] for s in samples], pdf, labels)
+
+    plots.plot_cdf_and_ecdfs([s[0] for s in samples], cdf, labels)
+    plots.plot_pdf_and_histograms([s[0] for s in samples], pdf, labels)
     plots.plot_ks(test_points, ks_statistics, labels)
     plots.plot_lr(test_points, lr_statistics, labels)
     plt.show()
-    return samples
-
-
-sample_and_plot([0.1, 1, 10, 100, 1000], plot_ecdfs=True, plot_histograms=True)
