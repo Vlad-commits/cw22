@@ -52,3 +52,9 @@ def plot_lr(test_points, lr_statistics, labels):
         lr = lr_statistics[i]
         plt.plot(test_points, lr, label=labels[i])
     plt.legend(loc='best')
+
+
+def plot_acceptance_rates(acceptance_rates, labels):
+    plt.figure(5)
+    plt.title("Acceptance rates")
+    plt.boxplot(acceptance_rates, labels=labels)

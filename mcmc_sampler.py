@@ -13,14 +13,19 @@ class MCMCSampler:
             self.sample_next(sample_from_proposal_fun, x_prev)
 
         result = []
+        proposals_accepted = 0
+
         for i in range(n_samples):
             result.append(x_prev)
-            x_prev = self.sample_next(sample_from_proposal_fun, x_prev)
-        return numpy.array(result)
+            x_prev, accepted = self.sample_next(sample_from_proposal_fun, x_prev)
+            if accepted:
+                proposals_accepted += 1
+        return numpy.array(result), proposals_accepted / (n_samples - 1)
 
     def sample_next(self, sample_from_proposal_fun, x_prev):
         proposed_x = sample_from_proposal_fun(x_prev)
         acceptance_probability = min(self.target_pdf(proposed_x) / self.target_pdf(x_prev), 1)
         if acceptance_probability >= self.uniform.rvs():
-            x_prev = proposed_x
-        return x_prev
+            return proposed_x, True
+        else:
+            return x_prev, False
