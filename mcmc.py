@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
-import pandas as pd
 
 import plots
 import tests
 from mcmc_sampler import MCMCSampler
+
+np.random.seed(42)
 
 multivariate_normal1 = stats.multivariate_normal([0], [[0.5]])
 multivariate_normal2 = stats.multivariate_normal([-4], [[0.5]])
