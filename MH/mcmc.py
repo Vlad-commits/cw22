@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
 
-import plots
-import tests
-from mcmc_sampler import MCMCSampler
+from MH import tests, plots
+from MH.mcmc_sampler import MCMCSampler
 
 np.random.seed(42)
 
