@@ -1,54 +1,7 @@
-import time
-
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy import ma
-import matplotlib.pyplot as plt
 from scipy.ndimage import convolve
-from scipy.ndimage.interpolation import shift
-
-
-def can_r(a):
-    n = len(a)
-    m = len(a[0])
-    result = np.zeros((n, m), dtype=np.bool)
-    for i in range(n):
-        for j in range(m):
-            if (a[i][j]) and (j < (m - 1)) and (not a[i][j + 1]):
-                result[i][j] = True
-    return result
-
-
-def can_l(a):
-    n = len(a)
-    m = len(a[0])
-    result = np.zeros((n, m), dtype=np.bool)
-    for i in range(n):
-        for j in range(m):
-            if (a[i][j]) and (j > 0) and (not a[i][j - 1]):
-                result[i][j] = True
-    return result
-
-
-def can_t(a):
-    n = len(a)
-    m = len(a[0])
-    result = np.zeros((n, m), dtype=np.bool)
-    for i in range(n):
-        for j in range(m):
-            if (a[i][j]) and (i > 0) and (not a[i - 1][j]):
-                result[i][j] = True
-    return result
-
-
-def can_b(a):
-    n = len(a)
-    m = len(a[0])
-    result = np.zeros((n, m), dtype=np.bool)
-    for i in range(n):
-        for j in range(m):
-            if (a[i][j]) and (i < n - 1) and (not a[i + 1][j]):
-                result[i][j] = True
-    return result
 
 
 class Model:
@@ -60,7 +13,7 @@ class Model:
                  # probability to diffuse and become inactive when having at least one inactive neighbour
                  p_d=0.05,
                  # probability to spontaneously enter market dynamics
-                 p_e=0.0001,
+                 p_e=0.0003,
                  #
                  initial_active_freq=0.1
                  ):
@@ -71,7 +24,6 @@ class Model:
         self.m = m
 
         self.ones = np.ones((self.n, self.m), dtype=np.byte)
-        self.fours = 4 * self.ones
 
         self.activeness_mask = np.random.random(self.n * self.m).reshape(
             (self.n, self.m)) < (self.ones * initial_active_freq)
@@ -121,7 +73,7 @@ class Model:
         p = 1 / can_activate_n
         p[p == np.inf] = 0
         will_try_activate_bot = can_activate_bot \
-                                & (np.random.binomial(1, p, (self.n, self.m)) == self.ones)
+                                & (np.random.default_rng().binomial(1, p, (self.n, self.m)) == self.ones)
 
         can_activate_n = can_activate_left.astype(np.byte) \
                          + can_activate_right.astype(np.byte) \
@@ -130,7 +82,7 @@ class Model:
         p[p == np.inf] = 0
         will_try_activate_left = can_activate_left \
                                  & ~will_try_activate_bot \
-                                 & (np.random.binomial(1, p, (self.n, self.m)) == self.ones)
+                                 & (np.random.default_rng().binomial(1, p, (self.n, self.m)) == self.ones)
 
         can_activate_n = can_activate_right.astype(np.byte) \
                          + can_activate_top.astype(np.byte)
@@ -139,7 +91,7 @@ class Model:
         will_try_activate_right = can_activate_right \
                                   & ~will_try_activate_bot \
                                   & ~will_try_activate_left \
-                                  & (np.random.binomial(1, p, (self.n, self.m)) == self.ones)
+                                  & (np.random.default_rng().binomial(1, p, (self.n, self.m)) == self.ones)
 
         will_try_activate_top = can_activate_top \
                                 & ~will_try_activate_right \
@@ -153,10 +105,10 @@ class Model:
 
         p_to_be_activated = self.ones - (self.not_h_matrix ** maybe_activated_by) * self.not_e_matrix
 
-        to_be_activated = np.random.binomial(1, p_to_be_activated, (self.n, self.m)) == self.ones
+        to_be_activated = np.random.default_rng().binomial(1, p_to_be_activated, (self.n, self.m)) == self.ones
 
         has_inactive_neighbours = convolve(~self.activeness_mask, self.convolution_kernel_neighbours)
-        to_survive_deactivation = (np.random.binomial(1, self.d_matrix, (self.n, self.m)) == 0) | (
+        to_survive_deactivation = (np.random.default_rng().binomial(1, self.d_matrix, (self.n, self.m)) == 0) | (
             ~has_inactive_neighbours)
 
         self.activeness_mask = ~self.activeness_mask & to_be_activated | self.activeness_mask & to_survive_deactivation
@@ -177,6 +129,7 @@ def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t):
     for index, active_count_series in enumerate(active_count_series_list):
         plt.plot(ts, active_count_series, label=p_hs[index])
     plt.legend(loc='best')
+    plt.show()
 
 
 def simulate(ts, model: Model):
@@ -186,3 +139,5 @@ def simulate(ts, model: Model):
         active_count = model.get_active_count()
         active_counts.append(active_count)
     return active_counts
+
+simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 1000)
