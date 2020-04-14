@@ -1,6 +1,54 @@
+import time
+
 import numpy as np
 from numpy import ma
 import matplotlib.pyplot as plt
+from scipy.ndimage import convolve
+from scipy.ndimage.interpolation import shift
+
+
+def can_r(a):
+    n = len(a)
+    m = len(a[0])
+    result = np.zeros((n, m), dtype=np.bool)
+    for i in range(n):
+        for j in range(m):
+            if (a[i][j]) and (j < (m - 1)) and (not a[i][j + 1]):
+                result[i][j] = True
+    return result
+
+
+def can_l(a):
+    n = len(a)
+    m = len(a[0])
+    result = np.zeros((n, m), dtype=np.bool)
+    for i in range(n):
+        for j in range(m):
+            if (a[i][j]) and (j > 0) and (not a[i][j - 1]):
+                result[i][j] = True
+    return result
+
+
+def can_t(a):
+    n = len(a)
+    m = len(a[0])
+    result = np.zeros((n, m), dtype=np.bool)
+    for i in range(n):
+        for j in range(m):
+            if (a[i][j]) and (i > 0) and (not a[i - 1][j]):
+                result[i][j] = True
+    return result
+
+
+def can_b(a):
+    n = len(a)
+    m = len(a[0])
+    result = np.zeros((n, m), dtype=np.bool)
+    for i in range(n):
+        for j in range(m):
+            if (a[i][j]) and (i < n - 1) and (not a[i + 1][j]):
+                result[i][j] = True
+    return result
 
 
 class Model:
@@ -31,51 +79,87 @@ class Model:
         self.matrix = ma.masked_array(np.zeros((n, m), dtype=np.byte), mask=self.activeness_mask,
                                       fill_value=1)
 
-        self.not_h_matrix = self.ones * (1 - p_h)
-        self.e_matrix = self.ones * p_e
-        self.d_matrix = self.ones * p_d
-        self.convolution_kernel = np.array([[0, 1, 0],
-                                            [1, 0, 1],
-                                            [0, 1, 0]], dtype=np.byte)
+        self.not_h_matrix = self.ones.astype(dtype=np.float) * (1 - p_h)
+        self.not_e_matrix = self.ones.astype(dtype=np.float) * (1 - p_e)
+        self.d_matrix = self.ones.astype(dtype=np.float) * p_d
+        self.convolution_kernel_neighbours = np.array([[0, 1, 0],
+                                                       [1, 0, 1],
+                                                       [0, 1, 0]])
+        self.convolution_kernel_right = np.array([[0, 0, 0],
+                                                  [1, 2, 0],
+                                                  [0, 0, 0]], dtype=np.byte)
+        self.convolution_kernel_left = np.array([[0, 0, 0],
+                                                 [0, 2, 1],
+                                                 [0, 0, 0]], dtype=np.byte)
+        self.convolution_kernel_top = np.array([[0, 0, 0],
+                                                [0, 2, 0],
+                                                [0, 1, 0]], dtype=np.byte)
+        self.convolution_kernel_bottom = np.array([[0, 1, 0],
+                                                   [0, 2, 0],
+                                                   [0, 0, 0]], dtype=np.byte)
 
     def step(self):
-        new_activeness_mask = np.zeros((self.n, self.m), dtype=np.bool)
+        am = self.activeness_mask.astype(np.byte)
+        b = convolve(am, self.convolution_kernel_bottom)
+        t = convolve(am, self.convolution_kernel_top)
+        l = convolve(am, self.convolution_kernel_left)
+        r = convolve(am, self.convolution_kernel_right)
 
-        for i in range(self.n):
-            for j in range(self.m):
-                inactive_neighbours = []
-                if j > 0 and not (self.activeness_mask[i][j - 1]):
-                    inactive_neighbours.append((i, j - 1))
-                if (j < self.m - 1) and not (self.activeness_mask[i][j + 1]):
-                    inactive_neighbours.append((i, j + 1))
-                if i > 0 and not (self.activeness_mask[i - 1][j]):
-                    inactive_neighbours.append((i - 1, j))
-                if (i < self.n - 1) and not (self.activeness_mask[i + 1][j]):
-                    inactive_neighbours.append((i + 1, j))
+        can_activate_bot = (b == 2)
+        can_activate_bot[self.n - 1, :] = False
+        can_activate_top = (t == 2)
+        can_activate_top[0, :] = False
+        can_activate_left = (l == 2)
+        can_activate_left[:, 0] = False
+        can_activate_right = (r == 2)
+        can_activate_right[:, self.m - 1] = False
 
-                n_inactive_neighbours = len(inactive_neighbours)
+        can_activate_n = can_activate_bot.astype(np.byte) \
+                         + can_activate_left.astype(np.byte) \
+                         + can_activate_right.astype(np.byte) \
+                         + can_activate_top.astype(np.byte)
+        p = 1 / can_activate_n
+        p[p == np.inf] = 0
+        will_try_activate_bot = can_activate_bot \
+                                & (np.random.binomial(1, p, (self.n, self.m)) == self.ones)
 
-                current = self.activeness_mask[i][j]
+        can_activate_n = can_activate_left.astype(np.byte) \
+                         + can_activate_right.astype(np.byte) \
+                         + can_activate_top.astype(np.byte)
+        p = 1 / can_activate_n
+        p[p == np.inf] = 0
+        will_try_activate_left = can_activate_left \
+                                 & ~will_try_activate_bot \
+                                 & (np.random.binomial(1, p, (self.n, self.m)) == self.ones)
 
-                if current == True:
-                    # may become inactive
-                    if (n_inactive_neighbours != 0) and (np.random.random(1) < self.p_d):
-                        new_activeness_mask[i, j] = False
-                    else:
-                        # stay active
-                        new_activeness_mask[i, j] = True
-                    # may activate neighbour
-                    if (n_inactive_neighbours != 0) and (np.random.random(1) < self.p_h):
-                        random = np.random.random(1)
-                        for k in range(n_inactive_neighbours):
-                            if random < (1.0 * (k + 1) / n_inactive_neighbours):
-                                (i1, j1) = inactive_neighbours[k]
-                                new_activeness_mask[i1, j1] = True
-                                break
-                else:
-                    if np.random.random(1) < self.p_e:
-                        new_activeness_mask[i, j] = True
-        self.activeness_mask = new_activeness_mask
+        can_activate_n = can_activate_right.astype(np.byte) \
+                         + can_activate_top.astype(np.byte)
+        p = 1 / can_activate_n
+        p[p == np.inf] = 0
+        will_try_activate_right = can_activate_right \
+                                  & ~will_try_activate_bot \
+                                  & ~will_try_activate_left \
+                                  & (np.random.binomial(1, p, (self.n, self.m)) == self.ones)
+
+        will_try_activate_top = can_activate_top \
+                                & ~will_try_activate_right \
+                                & ~will_try_activate_bot \
+                                & ~will_try_activate_left
+
+        maybe_activated_by = np.roll(will_try_activate_bot, self.m).astype(np.byte) \
+                             + np.roll(will_try_activate_top, -self.m).astype(np.byte) \
+                             + np.roll(will_try_activate_left, -1).astype(np.byte) \
+                             + np.roll(will_try_activate_right, 1).astype(np.byte)
+
+        p_to_be_activated = self.ones - (self.not_h_matrix ** maybe_activated_by) * self.not_e_matrix
+
+        to_be_activated = np.random.binomial(1, p_to_be_activated, (self.n, self.m)) == self.ones
+
+        has_inactive_neighbours = convolve(~self.activeness_mask, self.convolution_kernel_neighbours)
+        to_survive_deactivation = (np.random.binomial(1, self.d_matrix, (self.n, self.m)) == 0) | (
+            ~has_inactive_neighbours)
+
+        self.activeness_mask = ~self.activeness_mask & to_be_activated | self.activeness_mask & to_survive_deactivation
         self.matrix.mask = self.activeness_mask
 
     def get_active_count(self):
