@@ -13,7 +13,7 @@ class Model:
                  # probability to diffuse and become inactive when having at least one inactive neighbour
                  p_d=0.05,
                  # probability to spontaneously enter market dynamics
-                 p_e=0.0003,
+                 p_e=0.0001,
                  #
                  initial_active_freq=0.1
                  ):
@@ -32,6 +32,7 @@ class Model:
                                       fill_value=1)
 
         self.not_h_matrix = self.ones.astype(dtype=np.float) * (1 - p_h)
+        self.h_matrix = self.ones.astype(dtype=np.float) *  p_h
         self.not_e_matrix = self.ones.astype(dtype=np.float) * (1 - p_e)
         self.d_matrix = self.ones.astype(dtype=np.float) * p_d
         self.convolution_kernel_neighbours = np.array([[0, 1, 0],
@@ -51,20 +52,13 @@ class Model:
                                                    [0, 0, 0]], dtype=np.byte)
 
     def step(self):
-        am = self.activeness_mask.astype(np.byte)
-        b = convolve(am, self.convolution_kernel_bottom)
-        t = convolve(am, self.convolution_kernel_top)
-        l = convolve(am, self.convolution_kernel_left)
-        r = convolve(am, self.convolution_kernel_right)
+        can_activate_bot = self.get_cells_can_activate_bot()
 
-        can_activate_bot = (b == 2)
-        can_activate_bot[self.n - 1, :] = False
-        can_activate_top = (t == 2)
-        can_activate_top[0, :] = False
-        can_activate_left = (l == 2)
-        can_activate_left[:, 0] = False
-        can_activate_right = (r == 2)
-        can_activate_right[:, self.m - 1] = False
+        can_activate_top = self.get_cells_can_activate_top()
+
+        can_activate_left = self.get_cells_can_activate_left()
+
+        can_activate_right = self.get_cells_can_activate_right()
 
         can_activate_n = can_activate_bot.astype(np.byte) \
                          + can_activate_left.astype(np.byte) \
@@ -114,6 +108,30 @@ class Model:
         self.activeness_mask = ~self.activeness_mask & to_be_activated | self.activeness_mask & to_survive_deactivation
         self.matrix.mask = self.activeness_mask
 
+    def get_cells_can_activate_right(self):
+        r = convolve(self.activeness_mask.astype(np.byte), self.convolution_kernel_right)
+        can_activate_right = (r == 2)
+        can_activate_right[:, self.m - 1] = False
+        return can_activate_right
+
+    def get_cells_can_activate_left(self):
+        l = convolve(self.activeness_mask.astype(np.byte), self.convolution_kernel_left)
+        can_activate_left = (l == 2)
+        can_activate_left[:, 0] = False
+        return can_activate_left
+
+    def get_cells_can_activate_top(self):
+        t = convolve(self.activeness_mask.astype(np.byte), self.convolution_kernel_top)
+        can_activate_top = (t == 2)
+        can_activate_top[0, :] = False
+        return can_activate_top
+
+    def get_cells_can_activate_bot(self):
+        b = convolve(self.activeness_mask.astype(np.byte), self.convolution_kernel_bottom)
+        can_activate_bot = (b == 2)
+        can_activate_bot[self.n - 1, :] = False
+        return can_activate_bot
+
     def get_active_count(self):
         return np.count_nonzero(self.activeness_mask)
 
@@ -140,4 +158,4 @@ def simulate(ts, model: Model):
         active_counts.append(active_count)
     return active_counts
 
-simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 1000)
+simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 9000)
