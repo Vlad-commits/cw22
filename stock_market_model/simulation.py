@@ -1,9 +1,6 @@
 import numpy as np
 from numpy import ma
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from IPython.display import HTML
-from scipy.ndimage import convolve
 
 
 class Model:
@@ -42,43 +39,56 @@ class Model:
                                             [0, 1, 0]], dtype=np.byte)
 
     def step(self):
-        n_active_neighbours = convolve(np.array(self.activeness_mask, dtype=np.byte),
-                                       self.convolution_kernel)
+        new_activeness_mask = np.zeros((self.n, self.m), dtype=np.bool)
 
-        # p_to_be_activated = self.ones - self.not_h_matrix ** n_active_neighbours  * (self.ones - self.e_matrix)
-        p_to_be_activated = self.ones - self.not_h_matrix ** (n_active_neighbours > 0) * (self.ones - self.e_matrix)
+        for i in range(self.n):
+            for j in range(self.m):
+                inactive_neighbours = []
+                if j > 0 and not (self.activeness_mask[i][j - 1]):
+                    inactive_neighbours.append((i, j - 1))
+                if (j < self.m - 1) and not (self.activeness_mask[i][j + 1]):
+                    inactive_neighbours.append((i, j + 1))
+                if i > 0 and not (self.activeness_mask[i - 1][j]):
+                    inactive_neighbours.append((i - 1, j))
+                if (i < self.n - 1) and not (self.activeness_mask[i + 1][j]):
+                    inactive_neighbours.append((i + 1, j))
 
-        to_be_activated = np.random.binomial(1, p_to_be_activated, (self.n, self.m)) == self.ones
+                n_inactive_neighbours = len(inactive_neighbours)
 
-        to_survive_deactivation = (np.random.binomial(1, self.d_matrix, (self.n, self.m)) == 0) | (
-                n_active_neighbours == self.fours)
+                current = self.activeness_mask[i][j]
 
-        self.activeness_mask = ~self.activeness_mask & to_be_activated | self.activeness_mask & to_survive_deactivation
+                if current == True:
+                    # may become inactive
+                    if (n_inactive_neighbours != 0) and (np.random.random(1) < self.p_d):
+                        new_activeness_mask[i, j] = False
+                    else:
+                        # stay active
+                        new_activeness_mask[i, j] = True
+                    # may activate neighbour
+                    if (n_inactive_neighbours != 0) and (np.random.random(1) < self.p_h):
+                        random = np.random.random(1)
+                        for k in range(n_inactive_neighbours):
+                            if random < (1.0 * (k + 1) / n_inactive_neighbours):
+                                (i1, j1) = inactive_neighbours[k]
+                                new_activeness_mask[i1, j1] = True
+                                break
+                else:
+                    if np.random.random(1) < self.p_e:
+                        new_activeness_mask[i, j] = True
+        self.activeness_mask = new_activeness_mask
         self.matrix.mask = self.activeness_mask
 
     def get_active_count(self):
         return np.count_nonzero(self.activeness_mask)
 
 
-def animate(model: Model, t: int = 100, steps_per_frame: int = 1):
-    figure = plt.figure()
-    ca_plot = plt.imshow(model.matrix, cmap='seismic')
-
-    def animation_func(i):
-        for i in range(steps_per_frame):
-            model.step()
-        ca_plot.set_data(model.matrix.filled())
-        return ca_plot
-
-    plt.colorbar(ca_plot)
-    return FuncAnimation(figure, animation_func, frames=int(t / steps_per_frame))
-
-
-def simulate_and_plot(p_hs: list, max_t):
+def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t):
     ts = range(1, max_t)
     active_count_series_list = []
-    for p_h in p_hs:
-        active_count_series_list.append(simulate(ts, Model(p_h=p_h)))
+    assert len(p_hs) == len(initial_acitv_freqs)
+    for i in range(len(p_hs)):
+        active_count_series_list.append(simulate(ts, Model(p_h=p_hs[i],
+                                                           initial_active_freq=initial_acitv_freqs[i])))
 
     for index, active_count_series in enumerate(active_count_series_list):
         plt.plot(ts, active_count_series, label=p_hs[index])
