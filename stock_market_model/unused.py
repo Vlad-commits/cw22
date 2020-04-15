@@ -1,4 +1,4 @@
-from stock_market_model.simulation import Model
+from stock_market_model.simulation import Model, simulate_and_plot, simulate_and_plots
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -60,3 +60,9 @@ def can_b(a):
             if (a[i][j]) and (i < n - 1) and (not a[i + 1][j]):
                 result[i][j] = True
     return result
+
+
+# anni = animate(Model(50,50,0.051),t=200000,steps_per_frame=1000)
+# simulate_and_plot([0.0493], [0.2], 1000)
+asd = simulate_and_plots(models=[Model(p_h=0.051), Model(p_h=0.0485)], ts=range(20000), labels=["f", "l"])
+plt.show()
