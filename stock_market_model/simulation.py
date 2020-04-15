@@ -87,13 +87,18 @@ class Model:
 
         to_be_activated = np.random.default_rng().binomial(1, p_to_be_activated, (self.n, self.m)) == self.ones
 
-        has_inactive_neighbours = convolve(~self.activeness_mask, self.convolution_kernel_neighbours)
+        has_inactive_neighbours = self.cells_have_inactive_neighbours()
         to_survive_deactivation = (np.random.default_rng().binomial(1, self.d_matrix,
                                                                     (self.n, self.m)) == 0) | (
                                       ~has_inactive_neighbours)
 
         self.activeness_mask = ~self.activeness_mask & to_be_activated | self.activeness_mask & to_survive_deactivation
         self.matrix.mask = self.activeness_mask
+
+    def cells_have_inactive_neighbours(self):
+        return convolve(~self.activeness_mask, self.convolution_kernel_neighbours, mode='constant')
+
+
 
     @staticmethod
     def get_cells_can_activate_right(activeness_mask, already_activated=None):
@@ -183,3 +188,5 @@ def simulate(ts, model: Model):
         active_count = model.get_active_count()
         active_counts.append(active_count)
     return active_counts
+
+

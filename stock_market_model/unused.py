@@ -62,6 +62,25 @@ def can_b(a):
     return result
 
 
+def cells_have_inactive_neighbours(activeness_mask):
+    n = len(activeness_mask)
+    m = len(activeness_mask[0])
+    result = np.ndarray((n, m), dtype=np.bool)
+    for i in range(n):
+        for j in range(m):
+            r = False
+            if i != 0 and not (activeness_mask[i - 1][j]):
+                r = True
+            if j != 0 and not (activeness_mask[i][j - 1]):
+                r = True
+            if i != n - 1 and not activeness_mask[i + 1][j]:
+                r = True
+            if j != m - 1 and not activeness_mask[i][j + 1]:
+                r = True
+            result[i][j] = r
+    return result
+
+
 # anni = animate(Model(50,50,0.051),t=200000,steps_per_frame=1000)
 # simulate_and_plot([0.0493], [0.2], 1000)
 asd = simulate_and_plots(models=[Model(p_h=0.051), Model(p_h=0.0485)], ts=range(20000), labels=["f", "l"])
