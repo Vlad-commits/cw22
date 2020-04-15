@@ -157,10 +157,11 @@ Model.convolution_kernel_bottom = np.array([[0, 1, 0],
                                             [0, 0, 0]], dtype=np.byte)
 
 
-def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t):
+def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t, p_d=0.05, p_e=0.0001):
     ts = range(1, max_t)
     assert len(p_hs) == len(initial_acitv_freqs)
-    models = [Model(p_h=p_hs[i], initial_active_freq=initial_acitv_freqs[i]) for i in range(len(p_hs))]
+    models = [Model(p_h=p_hs[i], p_d=p_d, p_e=p_e, initial_active_freq=initial_acitv_freqs[i]) for i in
+              range(len(p_hs))]
     labels = p_hs
 
     return simulate_and_plots(labels, models, ts)
@@ -182,4 +183,3 @@ def simulate(ts, model: Model):
         active_count = model.get_active_count()
         active_counts.append(active_count)
     return active_counts
-
