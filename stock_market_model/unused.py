@@ -11,7 +11,7 @@ def animate(model: Model, t: int = 100, steps_per_frame: int = 1):
     def animation_func(i):
         for i in range(steps_per_frame):
             model.step()
-        ca_plot.set_data(model.matrix.filled())
+        ca_plot.set_data(model.matrix)
         return ca_plot
 
     plt.colorbar(ca_plot)
@@ -81,7 +81,7 @@ def cells_have_inactive_neighbours(activeness_mask):
     return result
 
 
-# anni = animate(Model(50,50,0.051),t=200000,steps_per_frame=1000)
+ani = animate(Model(128, 512, 0.0493,initial_active_freq=0.2), t=2000, steps_per_frame=10)
 # simulate_and_plot([0.0493], [0.2], 1000)
-asd = simulate_and_plots(models=[Model(p_h=0.051), Model(p_h=0.0485)], ts=range(20000), labels=["f", "l"])
+# asd = simulate_and_plots(models=[Model(p_h=0.051), Model(p_h=0.0485)], ts=range(200), labels=["f", "l"])
 plt.show()
