@@ -37,14 +37,12 @@ class Model:
         self.d_matrix = self.ones.astype(dtype=np.float64) * p_d
 
     def step(self):
-        # active_sellers = self.matrix == -1
-        # active_buyers = self.matrix == 1
         activeness_mask = self.matrix != 0
 
         to_be_activated = self.get_activated_by_neighbours(activeness_mask)
 
-        # coin_flip = self.flip_coin()
-        # to_be_activated = to_be_activated * ((-1) * coin_flip) + to_be_activated * (~coin_flip)
+        coin_flip = self.flip_coin()
+        to_be_activated = to_be_activated * ((-1) * coin_flip) + to_be_activated * (~coin_flip)
         to_be_activated = to_be_activated * (~activeness_mask)
 
         has_inactive_neighbours = Model.get_cells_having_inactive_neighbours(activeness_mask)
