@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -329,27 +330,24 @@ def read_and_compute_his(p, n=512, m=128):
         temp = np.zeros((n, m))
         for cluster_number in cluster_numbers:
             temp[cluster_numbers_for_cells == cluster_number] = cluster_sizes[cluster_number]
-        hi = (temp * matrix) / (sum(temp))
+        hi = np.sum(temp * matrix) / (np.sum(temp))
         his.append(hi)
 
     read_and_invoke(p, callback)
     return np.array(his)
 
 
-p = Path("ph0493t9000.npy")
+p = Path("2_ph0493t9000.npy")
+his_saved = Path("2_his.npy")
+
+st = time.time()
+
 simulate_and_write(Model(p_h=0.0493), 9000, p)
 
-his = read_and_compute_his(p)
+writed = time.time()
+print(writed - st)
 
-his_saved = Path("his.npy")
+his = read_and_compute_his(p)
 with his_saved.open("ab") as f:
     np.save(f, his)
-
-with his_saved.open('rb') as f:
-    his = np.load(f)
-
-mean = his.mean()
-std = his.std()
-normalizied_his = (his - mean) / std
-
-sns.distplot(his)
+print(writed - time.time())
