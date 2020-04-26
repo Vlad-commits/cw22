@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy import ma
+import seaborn as sns
 from scipy.ndimage import convolve
 
 
@@ -52,6 +52,8 @@ class Model:
 
         self.matrix = self.matrix * (activeness_mask & to_survive_deactivation) + to_be_activated
 
+        # asd = self.cluster_sizes()
+
     def get_activated_by_neighbours(self, activeness_mask):
         can_activate_bot = Model.get_cells_can_activate_bot(activeness_mask)
         can_activate_top = Model.get_cells_can_activate_top(activeness_mask)
@@ -99,6 +101,45 @@ class Model:
     @staticmethod
     def get_cells_having_inactive_neighbours(activeness_mask):
         return convolve(~activeness_mask, Model.convolution_kernel_neighbours, mode='constant')
+
+    def cluster_sizes(self):
+        activeness_mask = self.matrix != 0
+        cluster_number, n_clusters = Model.get_cluster_numbers(activeness_mask, self.n, self.m)
+        return Model.get_cluster_sizes(cluster_number, n_clusters)
+
+    @staticmethod
+    def get_cluster_numbers(activeness_mask, n, m):
+        next_cluster_number = 1
+        cluster_index = np.zeros((n, m), dtype=int)
+        for i in range(n):
+            for j in range(m):
+                if activeness_mask[i][j]:
+                    left_number = 0
+                    top_number = 0
+                    if i != 0:
+                        left_number = cluster_index[i - 1][j]
+                    if j != 0:
+                        top_number = cluster_index[i][j - 1]
+
+                    left = left_number != 0
+                    top = top_number != 0
+                    if left & top:
+                        cluster_index[i][j] = left_number
+                        cluster_index[cluster_index == left_number] = top_number
+                        pass
+                    elif left:
+                        cluster_index[i][j] = left_number
+                    elif top:
+                        cluster_index[i][j] = top_number
+                    else:
+                        cluster_index[i][j] = next_cluster_number
+                        next_cluster_number += 1
+
+        return (cluster_index, next_cluster_number)
+
+    @staticmethod
+    def get_cluster_sizes(cluster_index, clusters_count):
+        return [np.count_nonzero(cluster_index == i) for i in range(1, clusters_count)]
 
     @staticmethod
     def get_cells_can_activate_right(activeness_mask, already_activated=None):
@@ -177,10 +218,23 @@ def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t, p_d=0.049, p
 
 def simulate_and_plots(labels, models, ts):
     active_count_series_list = []
+    clusters_sizes_list = []
     for model in models:
-        active_count_series_list.append(simulate(ts, model))
+        active_count_series, clusters_sizes = simulate(ts, model)
+        active_count_series_list.append(active_count_series)
+        clusters_sizes_list.append(clusters_sizes)
+    return plot(active_count_series_list, clusters_sizes_list, labels, ts)
+
+
+
+def plot(active_count_series_list, clusters_sizes_list, labels, ts):
+    plt.subplot(121)
     for index, active_count_series in enumerate(active_count_series_list):
         plt.plot(ts, active_count_series, label=labels[index])
+    plt.legend(loc='best')
+    plt.subplot(122)
+    for index, clusters_sizes in enumerate(clusters_sizes_list):
+        sns.distplot(clusters_sizes, hist=False, label=labels[index])
     return plt.legend(loc='best')
 
 
@@ -190,9 +244,11 @@ def simulate(ts, model: Model):
         model.step()
         active_count = model.get_active_count()
         active_counts.append(active_count)
-    return active_counts
+    clusters_sizes = model.cluster_sizes()
+    return active_counts, clusters_sizes
 
 
 # simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 2000)
-asd = simulate_and_plot([0.0493, ], [0.15], 2000)
+asd = simulate_and_plot([0.0493, ], [0.15], 6000)
+
 plt.show()
