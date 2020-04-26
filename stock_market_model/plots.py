@@ -12,9 +12,8 @@ sp_log_returns = np.log(df["Close"]) - np.log(df["Open"])
 
 normalized_sp_log_returns = (sp_log_returns - sp_log_returns.mean()) / sp_log_returns.std()
 
-with Path("his2.npy").open('rb') as f:
+with Path("his3.npy").open('rb') as f:
     model_log_retruns = np.load(f)
-model_log_retruns =np.sum(model_log_retruns,axis=1)
 normalized_model_log_retruns = (model_log_retruns - model_log_retruns.mean()) / model_log_retruns.std()
 
 
@@ -49,7 +48,7 @@ plt.legend(loc="best")
 plt.show()
 
 
-from scipy import stats
+# from scipy import stats
 
 # print(stats.ks_2samp(normalized_sp_log_returns, normalized_model_log_retruns,mode='asymp'))
-# print(stats.ks_2samp(normalized_sp_log_returns, normalized_sp_log_returns))
+# print(stats.ks_2samp(normalized_sp_log_returns, normalized_model_log_retruns,mode='exact'))
