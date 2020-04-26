@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -14,6 +17,8 @@ class Model:
                  p_d=0.049,
                  # probability to spontaneously enter market dynamics
                  p_e=0.0001,
+                 A=1.8,
+                 h=0,
                  #
                  initial_active_freq=0.2
                  ):
@@ -36,6 +41,26 @@ class Model:
         self.e_matrix = self.ones.astype(dtype=np.float64) * p_e
         self.d_matrix = self.ones.astype(dtype=np.float64) * p_d
 
+        self.A = A
+        self.a = 2 * A
+        self.h = h
+
+    @staticmethod
+    def ksi(cluster_numbers):
+        max_number = max(cluster_numbers)
+        values = np.random.default_rng().uniform(-1, 1, max_number + 1)
+        return np.array([values[i] if (i in cluster_numbers) else 0 for i in range(max_number + 1)])
+
+    @staticmethod
+    def eta(cluster_size):
+        return np.random.default_rng().uniform(-1, 1, (cluster_size, cluster_size))
+
+    @staticmethod
+    def zeta(cluster_numbers):
+        max_number = max(cluster_numbers)
+        values = np.random.default_rng().uniform(-1, 1, max_number + 1)
+        return np.array([values[i] if (i in cluster_numbers) else 0 for i in range(max_number + 1)])
+
     def step(self):
         activeness_mask = self.matrix != 0
 
@@ -52,7 +77,30 @@ class Model:
 
         self.matrix = self.matrix * (activeness_mask & to_survive_deactivation) + to_be_activated
 
-        # asd = self.cluster_sizes()
+        cluster_numbers_for_cells, cluster_numbers = Model.get_cluster_numbers(self.matrix != 0, self.n, self.m)
+        cluster_sizes = Model.get_cluster_sizes(cluster_numbers_for_cells, cluster_numbers)
+
+        ksis = Model.ksi(cluster_numbers)
+        zetas = Model.zeta(cluster_numbers)
+
+        for cluster_number in cluster_numbers:
+            current_cluster = self.matrix[cluster_numbers_for_cells == cluster_number]
+            current_cluster_size = cluster_sizes[cluster_number]
+
+            ksi = ksis[cluster_number]
+            eta = Model.eta(current_cluster_size)
+            A = eta * self.a + self.A * ksi
+            h = self.h * zetas[cluster_number]
+
+            I_for_current_cluster_cells = np.matmul(A, current_cluster) / cluster_sizes[cluster_number] + h
+
+            p_for_current_cluster_cells = 1 / (1 + np.exp(-2 * I_for_current_cluster_cells))
+
+            new_spins = np.random.default_rng().binomial(1, p_for_current_cluster_cells, current_cluster_size)
+            new_spins[new_spins == 0] = -1
+
+            self.matrix[cluster_numbers_for_cells == cluster_number] = new_spins
+        return self.matrix
 
     def get_activated_by_neighbours(self, activeness_mask):
         can_activate_bot = Model.get_cells_can_activate_bot(activeness_mask)
@@ -254,7 +302,30 @@ def simulate(ts, model: Model):
     return active_counts, clusters_sizes[clusters_sizes != 0]
 
 
-# simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 2000)
-asd = simulate_and_plot([0.0493, ], [0.15], 100)
+def simulate_and_write(model: Model, max_time, path):
+    with path.open("ab") as f:
+        for t in range(max_time):
+            matrix = model.step()
+            np.save(f, matrix)
 
-plt.show()
+
+def read_and_invoke(p, callback):
+    with p.open('rb') as f:
+        fsz = os.fstat(f.fileno()).st_size
+        out = np.load(f)
+        callback(out)
+        while f.tell() < fsz:
+            out = np.load(f)
+            callback(out)
+
+
+# simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 2000)
+#
+# asd = simulate_and_plot([0.0493, ], [0.15], 2)
+# plt.show()
+
+
+p = Path("ph0493t9000.npy")
+simulate_and_write(Model(p_h=0.0493), 9000, p)
+# read_and_invoke(p,lambda m: print(np.count_nonzero(m)))
+# simulate_and_write(Model(p_h=0.0493), 5, p)
