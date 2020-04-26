@@ -104,42 +104,46 @@ class Model:
 
     def cluster_sizes(self):
         activeness_mask = self.matrix != 0
-        cluster_number, n_clusters = Model.get_cluster_numbers(activeness_mask, self.n, self.m)
-        return Model.get_cluster_sizes(cluster_number, n_clusters)
+        cluster_numbers_for_cells, cluster_numbers = Model.get_cluster_numbers(activeness_mask, self.n, self.m)
+        return Model.get_cluster_sizes(cluster_numbers_for_cells, cluster_numbers)
 
     @staticmethod
     def get_cluster_numbers(activeness_mask, n, m):
         next_cluster_number = 1
-        cluster_index = np.zeros((n, m), dtype=int)
+        cluster_numbers = []
+        cluster_numbers_for_cells = np.zeros((n, m), dtype=int)
         for i in range(n):
             for j in range(m):
                 if activeness_mask[i][j]:
                     left_number = 0
                     top_number = 0
                     if i != 0:
-                        left_number = cluster_index[i - 1][j]
+                        left_number = cluster_numbers_for_cells[i - 1][j]
                     if j != 0:
-                        top_number = cluster_index[i][j - 1]
+                        top_number = cluster_numbers_for_cells[i][j - 1]
 
                     left = left_number != 0
                     top = top_number != 0
                     if left & top:
-                        cluster_index[i][j] = left_number
-                        cluster_index[cluster_index == left_number] = top_number
+                        cluster_numbers_for_cells[i][j] = left_number
+                        if left_number!=top_number:
+                            cluster_numbers_for_cells[cluster_numbers_for_cells == left_number] = top_number
+                            cluster_numbers.remove(left_number)
                         pass
                     elif left:
-                        cluster_index[i][j] = left_number
+                        cluster_numbers_for_cells[i][j] = left_number
                     elif top:
-                        cluster_index[i][j] = top_number
+                        cluster_numbers_for_cells[i][j] = top_number
                     else:
-                        cluster_index[i][j] = next_cluster_number
+                        cluster_numbers_for_cells[i][j] = next_cluster_number
+                        cluster_numbers.append(next_cluster_number)
                         next_cluster_number += 1
 
-        return (cluster_index, next_cluster_number)
+        return (cluster_numbers_for_cells, cluster_numbers)
 
     @staticmethod
-    def get_cluster_sizes(cluster_index, clusters_count):
-        return [np.count_nonzero(cluster_index == i) for i in range(1, clusters_count)]
+    def get_cluster_sizes(cluster_numbers_for_cells, cluster_numbers):
+        return [np.count_nonzero(cluster_numbers_for_cells == i) for i in cluster_numbers]
 
     @staticmethod
     def get_cells_can_activate_right(activeness_mask, already_activated=None):
@@ -226,7 +230,6 @@ def simulate_and_plots(labels, models, ts):
     return plot(active_count_series_list, clusters_sizes_list, labels, ts)
 
 
-
 def plot(active_count_series_list, clusters_sizes_list, labels, ts):
     plt.subplot(121)
     for index, active_count_series in enumerate(active_count_series_list):
@@ -249,6 +252,6 @@ def simulate(ts, model: Model):
 
 
 # simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 2000)
-asd = simulate_and_plot([0.0493, ], [0.15], 6000)
+asd = simulate_and_plot([0.0493, ], [0.15], 200)
 
 plt.show()
