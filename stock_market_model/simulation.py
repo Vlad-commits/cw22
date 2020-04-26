@@ -126,7 +126,7 @@ class Model:
                     top = top_number != 0
                     if left & top:
                         cluster_numbers_for_cells[i][j] = left_number
-                        if left_number!=top_number:
+                        if left_number != top_number:
                             cluster_numbers_for_cells[cluster_numbers_for_cells == left_number] = top_number
                             cluster_numbers.remove(left_number)
                         pass
@@ -143,7 +143,10 @@ class Model:
 
     @staticmethod
     def get_cluster_sizes(cluster_numbers_for_cells, cluster_numbers):
-        return [np.count_nonzero(cluster_numbers_for_cells == i) for i in cluster_numbers]
+        max_number = max(cluster_numbers)
+
+        return np.array([np.count_nonzero(cluster_numbers_for_cells == i) if (i in cluster_numbers) else 0 for i in
+                         range(max_number + 1)])
 
     @staticmethod
     def get_cells_can_activate_right(activeness_mask, already_activated=None):
@@ -237,7 +240,7 @@ def plot(active_count_series_list, clusters_sizes_list, labels, ts):
     plt.legend(loc='best')
     plt.subplot(122)
     for index, clusters_sizes in enumerate(clusters_sizes_list):
-        sns.distplot(clusters_sizes, hist=False, label=labels[index])
+        sns.distplot(clusters_sizes, label=labels[index])
     return plt.legend(loc='best')
 
 
@@ -248,10 +251,10 @@ def simulate(ts, model: Model):
         active_count = model.get_active_count()
         active_counts.append(active_count)
     clusters_sizes = model.cluster_sizes()
-    return active_counts, clusters_sizes
+    return active_counts, clusters_sizes[clusters_sizes != 0]
 
 
 # simulate_and_plot([0.0493, 0.0490, 0.0488, 0.0485, 0.0475,],[0.15,0.11,0.04,0.04,0.04], 2000)
-asd = simulate_and_plot([0.0493, ], [0.15], 200)
+asd = simulate_and_plot([0.0493, ], [0.15], 100)
 
 plt.show()
