@@ -18,7 +18,7 @@ class Model:
                  p_d=0.049,
                  # probability to spontaneously enter market dynamics
                  p_e=0.0001,
-                 A=1.8,
+                 A=2.1,
                  h=0,
                  #
                  initial_active_freq=0.2
@@ -337,17 +337,17 @@ def read_and_compute_his(p, n=512, m=128):
     return np.array(his)
 
 
-p = Path("2_ph0493t9000.npy")
+p = Path("2_ph0493t9000a2dot1.npy")
 his_saved = Path("2_his.npy")
 
 st = time.time()
 
 simulate_and_write(Model(p_h=0.0493), 9000, p)
 
-writed = time.time()
-print(writed - st)
+sim_done = time.time()
+print(sim_done - st)
 
 his = read_and_compute_his(p)
 with his_saved.open("ab") as f:
     np.save(f, his)
-print(writed - time.time())
+print(sim_done - time.time())
