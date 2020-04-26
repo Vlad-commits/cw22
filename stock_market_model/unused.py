@@ -1,4 +1,4 @@
-from stock_market_model.simulation import Model, simulate_and_plot, simulate_and_plots
+from stock_market_model.simulation import Model
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
