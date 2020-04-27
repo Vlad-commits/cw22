@@ -71,8 +71,12 @@ def densities(model, real):
     plt.title("pdfs")
     plt.xlabel("$R$")
     plt.ylabel("$f(R)$")
-    sns.distplot(model, label="model", kde_kws=kde_kws)
-    sns.distplot(real, label="real", kde_kws=kde_kws)
-    sns.distplot(np.random.normal(size=10000), label="normal", kde_kws=kde_kws)
+
+    sns.distplot(model, label="model", kde_kws=kde_kws,hist=False)
+    sns.distplot(real, label="real", kde_kws=kde_kws,hist=False)
+
+    sns.distplot(np.random.normal(size=10000), label="normal", kde_kws=kde_kws,hist=False)
+    plt.yscale("log")
+
     plt.legend(loc="best")
     return plt
