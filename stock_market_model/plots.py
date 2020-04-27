@@ -4,22 +4,19 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# df = pd.read_csv("sp500.csv")
-df = pd.read_csv("sp500_paper.csv")
+df = pd.read_csv("data/real/sp500_paper.csv")
+log_returns_series_path = Path("data/2/log_returns.npy")
+
 
 sp_log_returns = np.log(df["Close"][1:]) - np.log(df["Close"].shift()[1:])
-
 normalized_sp_log_returns = (sp_log_returns - sp_log_returns.mean()) / sp_log_returns.std()
 
-p = Path("2_his.npy")
-# p = Path("his3.npy")
-with p.open('rb') as f:
+with log_returns_series_path.open('rb') as f:
     model_log_retruns = np.load(f)
 normalized_model_log_retruns = (model_log_retruns - model_log_retruns.mean()) / model_log_retruns.std()
 
 print(np.max(normalized_model_log_retruns))
 print(np.argmax(normalized_model_log_retruns))
-
 print(np.min(normalized_model_log_retruns))
 print(np.argmin(normalized_model_log_retruns))
 
