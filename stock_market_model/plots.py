@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
-
 def plot_active_cells_count_over_time(ts, active_count_series_list, labels):
     for index, active_count_series in enumerate(active_count_series_list):
         plt.plot(ts, active_count_series, label=labels[index])
@@ -23,7 +21,7 @@ def plot_cluster_sizes(clusters_sizes_list, labels):
 
 
 def qq_plot(model, real):
-    percs = np.linspace(0, 1000, 100)
+    percs = np.linspace(0, 100, 100)
     qn_a = np.percentile(model, percs)
     qn_b = np.percentile(real, percs)
     plt.xlabel("model")
@@ -36,15 +34,15 @@ def qq_plot(model, real):
 
 
 def log_returns_over_time(model, real):
-    plt.title("Normalized log-returns over time")
-
+    plt.title("Time series of returns reproduced with the simulation")
     plt.subplot("211")
     plt.ylim((-10, 10))
-    plt.plot(range(len(normalized_sp_log_returns)), normalized_sp_log_returns)
+    plt.plot(range(len(model)), model)
 
+    plt.title("Normalized logarithmic returns for the S&P500.")
     plt.subplot("212")
     plt.ylim((-10, 10))
-    plt.plot(range(len(normalized_model_log_retruns)), normalized_model_log_retruns)
+    plt.plot(range(len(real)), real)
 
 
 def densities(model, real):
