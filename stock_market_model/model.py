@@ -239,6 +239,13 @@ class Model:
         return np.count_nonzero(self.matrix)
 
 
+def simulate_and_write(model: Model, max_time, path):
+    with path.open("ab") as f:
+        for t in range(max_time):
+            matrix = model.step()
+            np.save(f, matrix)
+
+
 Model.convolution_kernel_right = np.array([[0, 0, 0],
                                            [1, 2, 0],
                                            [0, 0, 0]], dtype=np.byte)
@@ -254,5 +261,3 @@ Model.convolution_kernel_bottom = np.array([[0, 1, 0],
 Model.convolution_kernel_neighbours = np.array([[0, 1, 0],
                                                 [1, 0, 1],
                                                 [0, 1, 0]], dtype=np.byte)
-
-

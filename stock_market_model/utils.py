@@ -9,52 +9,27 @@ import numpy as np
 from stock_market_model.model import Model
 
 
-def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t, p_d=0.049, p_e=0.0001):
-    ts = range(1, max_t)
-    assert len(p_hs) == len(initial_acitv_freqs)
-    models = [Model(p_h=p_hs[i], p_d=p_d, p_e=p_e, initial_active_freq=initial_acitv_freqs[i]) for i in
-              range(len(p_hs))]
-    labels = p_hs
-
-    return simulate_and_plots(labels, models, ts)
-
-
-def simulate_and_plots(labels, models, ts):
-    active_count_series_list = []
-    clusters_sizes_list = []
-    for model in models:
-        active_count_series, clusters_sizes = simulate(ts, model)
-        active_count_series_list.append(active_count_series)
-        clusters_sizes_list.append(clusters_sizes)
-    return plot(active_count_series_list, clusters_sizes_list, labels, ts)
-
-
-def plot(active_count_series_list, clusters_sizes_list, labels, ts):
-    plt.subplot(121)
-    for index, active_count_series in enumerate(active_count_series_list):
-        plt.plot(ts, active_count_series, label=labels[index])
-    plt.legend(loc='best')
-    plt.subplot(122)
-    for index, clusters_sizes in enumerate(clusters_sizes_list):
-        sns.distplot(clusters_sizes, label=labels[index])
-    return plt.legend(loc='best')
+# def simulate_and_plot(p_hs: list, initial_acitv_freqs: list, max_t, p_d=0.049, p_e=0.0001):
+#     ts = range(1, max_t)
+#     assert len(p_hs) == len(initial_acitv_freqs)
+#     models = [Model(p_h=p_hs[i], p_d=p_d, p_e=p_e, initial_active_freq=initial_acitv_freqs[i]) for i in
+#               range(len(p_hs))]
+#     labels = p_hs
+#
+#     return simulate_and_plots(labels, models, ts)
+#
+#
+# def simulate_and_plots(labels, models, ts):
+#     active_count_series_list = []
+#     clusters_sizes_list = []
+#     for model in models:
+#         active_count_series, clusters_sizes = simulate(ts, model)
+#         active_count_series_list.append(active_count_series)
+#         clusters_sizes_list.append(clusters_sizes)
+#     return plot(active_count_series_list, clusters_sizes_list, labels, ts)
 
 
-def simulate(ts, model: Model):
-    active_counts = []
-    for t in ts:
-        model.step()
-        active_count = model.get_active_count()
-        active_counts.append(active_count)
-    clusters_sizes = model.cluster_sizes()
-    return active_counts, clusters_sizes[clusters_sizes != 0]
 
-
-def simulate_and_write(model: Model, max_time, path):
-    with path.open("ab") as f:
-        for t in range(max_time):
-            matrix = model.step()
-            np.save(f, matrix)
 
 
 def read_and_invoke(p, callback):
