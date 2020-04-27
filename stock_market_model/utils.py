@@ -29,9 +29,6 @@ from stock_market_model.model import Model
 #     return plot(active_count_series_list, clusters_sizes_list, labels, ts)
 
 
-
-
-
 def read_and_invoke(p, callback):
     with p.open('rb') as f:
         fsz = os.fstat(f.fileno()).st_size
@@ -75,7 +72,27 @@ def read_and_compute_spins(p, n=512, m=128):
     read_and_invoke(p, callback)
     return spins
 
+
 def calculate_spins_dynamics(simulation_file_path, path_to_save):
     his = read_and_compute_spins(simulation_file_path)
+    with path_to_save.open("ab") as f:
+        np.save(f, his)
+
+
+def read_and_compute_cluster_sizes(p, n=512, m=128):
+    cluster_sizes_list = []
+
+    def callback(matrix):
+        cluster_numbers_for_cells, cluster_numbers = Model.get_cluster_numbers(matrix != 0, n, m)
+        cluster_sizes = Model.get_cluster_sizes(cluster_numbers_for_cells, cluster_numbers)
+
+        cluster_sizes_list.append(cluster_sizes)
+
+    read_and_invoke(p, callback)
+    return cluster_sizes_list
+
+
+def calculate_cluster_sizes(simulation_file_path, path_to_save):
+    his = read_and_compute_cluster_sizes(simulation_file_path)
     with path_to_save.open("ab") as f:
         np.save(f, his)
