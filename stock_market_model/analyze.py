@@ -8,8 +8,7 @@ import scipy.stats as stats
 import plots_utils as plots
 
 
-
-def analyze(n_try = 3):
+def analyze(n_try=3):
     df = pd.read_csv("data/real/sp500_paper.csv")
     log_returns_series_path = Path("data/" + str(n_try) + "/log_returns.npy")
     spins_paths = Path("data/" + str(n_try) + "/spins.npy")
@@ -29,11 +28,15 @@ def analyze(n_try = 3):
     plots.densities(normalized_model_log_retruns, normalized_sp_log_returns)
     # plt.figure("3")
     # plots.qq_plot(normalized_model_log_retruns, normalized_sp_log_returns)
+    m = len(normalized_model_log_retruns)
+    M4 = ((normalized_model_log_retruns - normalized_model_log_retruns.mean()) ** 4).mean()
+    M2 = ((normalized_model_log_retruns - normalized_model_log_retruns.mean()) ** 2).mean()
+    kurtosis = ((m ** 2 - 1) / ((m - 2) * (m - 3))) * (M4 / M2 - 3 + 6 / (m + 1))
+    print("Коэффицент эксцесса: " + str(kurtosis))
+
     plt.figure("4")
     plots.plot_trading_dynamic_over_time(spins)
     plt.figure("5")
     plots.plot_active_cells_count_over_time(spins)
     plt.figure("6")
     plots.plot_cluster_sizes(cluster_sizes)
-
-
