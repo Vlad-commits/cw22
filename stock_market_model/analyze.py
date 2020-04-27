@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-import stock_market_model.plots as plots
+import plots_utils
 
 
 
