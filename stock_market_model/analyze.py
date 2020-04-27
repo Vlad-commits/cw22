@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-import plots_utils
+import plots_utils as plots
 
 
 
