@@ -69,7 +69,13 @@ def read_and_compute_spins(p, n=512, m=128):
     spins = []
 
     def callback(matrix):
-        spins.append((np.count_nonzero(matrix == -1), np.count_nonzero(matrix == 1)))
+        t2 = (np.count_nonzero(matrix == -1), np.count_nonzero(matrix == 1))
+        spins.append(t2)
 
     read_and_invoke(p, callback)
-    return np.array(spins)
+    return spins
+
+def calculate_spins_dynamics(simulation_file_path, path_to_save):
+    his = read_and_compute_spins(simulation_file_path)
+    with path_to_save.open("ab") as f:
+        np.save(f, his)

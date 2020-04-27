@@ -20,6 +20,10 @@ def plot_cluster_sizes(clusters_sizes_list, labels):
     return plt
 
 
+def plot_trading_dynamic_over_time(spins):
+    plt.plot(range(len(spins)), [pos / (pos + neg) for (pos, neg) in spins])
+
+
 def qq_plot(model, real):
     percs = np.linspace(0, 100, 100)
     qn_a = np.percentile(model, percs)
