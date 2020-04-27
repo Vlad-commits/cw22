@@ -58,11 +58,12 @@ def log_returns_over_time(model, real):
     plt.plot(range(len(model)), model)
 
     plt.subplot("212")
-    plt.title("Normalized logarithmic returns for the S&P500.")
+    plt.title("Normalized logarithmic returns for the S&P500.",y=1.08)
     plt.ylabel("$R$")
     plt.xlabel("$t$")
     plt.ylim((-10, 10))
     plt.plot(range(len(real)), real)
+    plt.tight_layout()
 
 
 def densities(model, real):
